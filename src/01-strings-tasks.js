@@ -66,7 +66,7 @@ function getStringFromTemplate(firstName, lastName) {
  *   'Hello, Chuck Norris!' => 'Chuck Norris'
  */
 function extractNameFromTemplate(value) {
-  return value.substring(6, value.length - 1);
+  return value.substring(7, value.length - 1);
 }
 
 
@@ -207,15 +207,11 @@ function getRectangleString(width, height) {
   let str = '';
   for (let i = 0; i < height; i += 1) {
     if (i === 0) {
-      str = '┌' + ('─').repeat(width - 2) + '┐\n';
-    }
-    else {
-      if (i === (height - 1)) {
-        str = '└' + ('─').repeat(width - 2) + '┘\n';
-      }
-      else {
-        str = '│' + (' ').repeat(width - 2) + '│\n';
-      }
+      str = `┌${('─').repeat(width - 2)}┐\n`;
+    } else if (i === (height - 1)) {
+      str = `└${('─').repeat(width - 2)}┘\n`;
+    } else {
+      str = `│${(' ').repeat(width - 2)}│\n`;
     }
     res += str;
   }
@@ -242,7 +238,13 @@ function getRectangleString(width, height) {
 function encodeToRot13(str) {
   const alp = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
   let res = '';
-  for (let i = 0; i < str.length; i++) { res += (str[i] <= 'Z') ? alp[(alp.indexOf(str[i]) + 13) % 26] : alp[26 + (alp.indexOf(str[i]) + 13) % 26]; }
+  for (let i = 0; i < str.length; i += 1) {
+    if (alp.indexOf(str[i]) >= 0) {
+      res += (str[i] <= 'Z') ? alp[(alp.indexOf(str[i]) + 13) % 26] : alp[26 + ((alp.indexOf(str[i]) + 13) % 26)];
+    } else {
+      res += str[i];
+    }
+  }
   return res;
 }
 
@@ -259,8 +261,12 @@ function encodeToRot13(str) {
  *   isString('test') => true
  *   isString(new String('test')) => true
  */
-function isString(/* value */) {
-  throw new Error('Not implemented');
+function isString(value) {
+  let res = false;
+  if (typeof value === 'string' || value instanceof String) {
+    res = true;
+  }
+  return res;
 }
 
 
@@ -288,8 +294,28 @@ function isString(/* value */) {
  *   'Q♠' => 50
  *   'K♠' => 51
  */
-function getCardId(/* value */) {
-  throw new Error('Not implemented');
+function getCardId(value) {
+  const ch = value.substring(value.length - 1);
+  const pos = value.substring(0, value.length - 1);
+  let a = 0;
+  switch (ch) {
+    case '♣': a = 0; break;
+    case '♦': a = 1; break;
+    case '♥': a = 2; break;
+    default: a = 3; break;
+  }
+  let b = 0;
+  if (Number(pos)) {
+    b = pos - 1;
+  } else {
+    switch (pos) {
+      case 'A': b = 0; break;
+      case 'J': b = 10; break;
+      case 'Q': b = 11; break;
+      default: b = 12; break;
+    }
+  }
+  return 13 * a + b;
 }
 
 
