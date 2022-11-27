@@ -20,8 +20,16 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  const obj = {
+    width,
+    height,
+    getArea() {
+      return this.width * this.height;
+    },
+  };
+
+  return obj;
 }
 
 
@@ -35,8 +43,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 
@@ -51,8 +59,10 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  const obj = JSON.parse(json);
+  const values = Object.values(obj);
+  return new proto.constructor(...values);
 }
 
 
@@ -111,32 +121,81 @@ function fromJSON(/* proto, json */) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  cssCode: '',
+  lastSelector: '',
+  correctOrder: ['element', 'id', 'class', 'attr', 'pseudoClass', 'pseudoElement'],
+  lastOrder: -1,
+
+  getLastElemError(selector) {
+    if (((selector === 'id') && (selector === this.lastSelector))
+        || ((selector === 'element') && (selector === this.lastSelector))
+        || ((selector === 'pseudoElement') && (selector === this.lastSelector))) {
+      return true;
+    }
+    return false;
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  // if (false) - incorrect order selectors
+  incorrectOrder(selector) {
+    if ((this.lastOrder !== -1)
+      && (this.correctOrder.indexOf(selector) < this.lastOrder)) {
+      return true;
+    }
+    return false;
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  copyBuilder(value, selector) {
+    const copiesSelectorBuilder = Object.create(this);
+
+    if (copiesSelectorBuilder.getLastElemError(selector)) {
+      throw new Error('Element, id and pseudo-element should not occur more then one time inside the selectord');
+    }
+    if (copiesSelectorBuilder.incorrectOrder(selector)) {
+      throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    }
+    copiesSelectorBuilder.lastOrder = copiesSelectorBuilder.correctOrder.indexOf(selector);
+    copiesSelectorBuilder.lastSelector = selector;
+    copiesSelectorBuilder.cssCode += value;
+    return copiesSelectorBuilder;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  stringify() {
+    const copiesCSSCode = this.cssCode;
+    this.cssCode = '';
+    this.lastOrder = -1;
+    this.lastSelector = '';
+    return copiesCSSCode;
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return this.copyBuilder(`${value}`, 'element');
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return this.copyBuilder(`#${value}`, 'id');
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return this.copyBuilder(`.${value}`, 'class');
+  },
+
+  attr(value) {
+    return this.copyBuilder(`[${value}]`, 'attr');
+  },
+
+  pseudoClass(value) {
+    return this.copyBuilder(`:${value}`, 'pseudoClass');
+  },
+
+  pseudoElement(value) {
+    return this.copyBuilder(`::${value}`, 'pseudoElement');
+  },
+
+  combine(selector1, combinator, selector2) {
+    const sel1 = selector1.stringify();
+    const sel2 = selector2.stringify();
+
+    return this.copyBuilder(`${sel1} ${combinator} ${sel2}`, '');
   },
 };
 
